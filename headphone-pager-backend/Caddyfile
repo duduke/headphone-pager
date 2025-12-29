@@ -1,0 +1,13 @@
+# Caddy reverse proxy for Headphone Pager (LAN/internal TLS)
+#
+# Provides HTTPS at https://home.lan (or whatever hostname you set)
+# so browsers allow microphone recording in /ui.
+#
+# Uses an internal CA (tls internal). You will need to trust the CA root cert
+# on devices where you open the UI.
+#
+# Change 'home.lan' to your hostname if needed.
+home.lan {
+  tls internal
+  reverse_proxy pager:8080
+}

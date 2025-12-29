@@ -1,0 +1,32 @@
+services:
+  pager:
+    build: ./app
+    container_name: headphone-pager
+    environment:
+      # Set this to a long random string
+      - ADMIN_TOKEN=${ADMIN_TOKEN:-change_me}
+    expose:
+      - "8080"
+    ports:
+      - "8585:8080"
+    # Optional: persist data if your backend uses sqlite/files under /data
+    volumes:
+      - pager_data:/data
+
+  caddy:
+    image: caddy:2
+    container_name: headphone-pager-caddy
+    depends_on:
+      - pager
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  pager_data:
+  caddy_data:
+  caddy_config:

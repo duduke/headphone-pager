@@ -1,0 +1,21 @@
+version: "3.9"
+
+services:
+  app:
+    build: ./app
+    container_name: headphone-pager
+    environment:
+      - ADMIN_TOKEN=change-me-long-random
+      - DB_PATH=/data/app.db
+      - BLOB_DIR=/data/blobs
+      - DEFAULT_MESSAGE_TTL_SECONDS=600
+      - PAIRING_CODE_TTL_SECONDS=300
+      - LONGPOLL_TIMEOUT_SECONDS=45
+    volumes:
+      - app_data:/data
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+
+volumes:
+  app_data:
