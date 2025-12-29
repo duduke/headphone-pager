@@ -3,10 +3,10 @@
 A lightweight .NET agent that long-polls the Headphone Pager backend and plays **audio messages** through the **Communications** audio role (to trigger Windows communications ducking).
 
 ## Pair a device
-Get a pairing code from `http://<server>:8080/ui`, then on the kid PC:
+Get a pairing code from `http://<server>:8585/ui`, then on the kid PC:
 
 ```powershell
-dotnet run -- --pair 123456 --server http://home.lan:8080 --name "Kid-PC"
+dotnet run -- --pair 123456 --server http://home.lan:8585 --name "Kid-PC"
 ```
 
 This writes config to:
