@@ -31,6 +31,10 @@ The agent runs quietly in the background on a Windows PC and plays voice message
 
 ---
 
+## Release
+
+File **HeadphoneAgent-v0.1.3.zip** contains compiled release for Windows x64
+
 ## Build Requirements
 
 - Windows 10 / 11
