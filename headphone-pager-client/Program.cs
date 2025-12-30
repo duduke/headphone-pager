@@ -3,6 +3,9 @@ using System.Text;
 using System.Text.Json;
 using NAudio.CoreAudioApi;
 using NAudio.Wave;
+using System.Drawing;
+using System.Threading;
+using System.Windows.Forms;
 
 namespace HeadphoneAgent;
 
@@ -30,28 +33,33 @@ public static class Program
 {
     private static readonly JsonSerializerOptions JsonOpts = new(JsonSerializerDefaults.Web);
 
-    public static async Task<int> Main(string[] args)
-    {
-        var cli = CliArgs.Parse(args);
+    
+[STAThread]
+public static int Main(string[] args)
+{
+    var cli = CliArgs.Parse(args);
 
-        if (cli.ShowHelp)
+    if (cli.ShowHelp)
+    {
+        MessageBox.Show(GetHelpText(), "Headphone Pager Agent", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        return 0;
+    }
+
+    var configPath = ConfigPaths.ConfigFilePath();
+    Directory.CreateDirectory(Path.GetDirectoryName(configPath)!);
+
+    // Pairing mode
+    if (!string.IsNullOrWhiteSpace(cli.PairCode))
+    {
+        if (string.IsNullOrWhiteSpace(cli.ServerBaseUrl) || string.IsNullOrWhiteSpace(cli.DeviceName))
         {
-            PrintHelp();
-            return 0;
+            MessageBox.Show("Pairing requires --server and --name.", "Pairing error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            return 2;
         }
 
-        var configPath = ConfigPaths.ConfigFilePath();
-        Directory.CreateDirectory(Path.GetDirectoryName(configPath)!);
-
-        if (!string.IsNullOrWhiteSpace(cli.PairCode))
+        try
         {
-            if (string.IsNullOrWhiteSpace(cli.ServerBaseUrl) || string.IsNullOrWhiteSpace(cli.DeviceName))
-            {
-                Console.Error.WriteLine("Pairing requires --server and --name.");
-                return 2;
-            }
-
-            var paired = await PairDevice(cli.ServerBaseUrl!, cli.PairCode!, cli.DeviceName!);
+            var paired = PairDevice(cli.ServerBaseUrl!, cli.PairCode!, cli.DeviceName!).GetAwaiter().GetResult();
             var cfg = new AgentConfig(
                 ServerBaseUrl: NormalizeBase(cli.ServerBaseUrl!),
                 DeviceId: paired.deviceId,
@@ -59,37 +67,138 @@ public static class Program
                 UrgentVolumeCap: 0.85
             );
 
-            await File.WriteAllTextAsync(configPath, JsonSerializer.Serialize(cfg, JsonOpts));
-            Console.WriteLine("Paired OK.");
-            Console.WriteLine($"DeviceId: {cfg.DeviceId}");
-            Console.WriteLine($"Config written to: {configPath}");
+            File.WriteAllText(configPath, JsonSerializer.Serialize(cfg, JsonOpts));
+            MessageBox.Show($"Paired OK.\n\nDeviceId: {cfg.DeviceId}\nConfig written to:\n{configPath}",
+                "Headphone Pager Agent", MessageBoxButtons.OK, MessageBoxIcon.Information);
             return 0;
         }
-
-        if (!File.Exists(configPath))
+        catch (Exception ex)
         {
-            Console.Error.WriteLine($"Config not found at: {configPath}");
-            Console.Error.WriteLine("Run pairing first:");
-            Console.Error.WriteLine("  HeadphoneAgent.exe --pair 123456 --server http://home.lan:8585 --name \"Kid-PC\"");
-            return 2;
+            MessageBox.Show($"Pairing failed: {ex.Message}", "Pairing error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            return 1;
         }
+    }
 
-        var cfgText = await File.ReadAllTextAsync(configPath);
-        var config = JsonSerializer.Deserialize<AgentConfig>(cfgText, JsonOpts)
-                     ?? throw new Exception("Failed to parse config.json");
+    if (!File.Exists(configPath))
+    {
+        MessageBox.Show(
+            "Config not found.\n\nRun pairing first:\nHeadphoneAgent.exe --pair 123456 --server http://home.lan:8585 --name \"Kid-PC\"",
+            "Headphone Pager Agent",
+            MessageBoxButtons.OK,
+            MessageBoxIcon.Warning
+        );
+        return 2;
+    }
 
-        if (!string.IsNullOrWhiteSpace(cli.ServerBaseUrl))
-            config = config with { ServerBaseUrl = NormalizeBase(cli.ServerBaseUrl!) };
+    var cfgText = File.ReadAllText(configPath);
+    var config = JsonSerializer.Deserialize<AgentConfig>(cfgText, JsonOpts)
+                 ?? throw new Exception("Failed to parse config.json");
 
-        Console.WriteLine($"HeadphoneAgent running for device {config.DeviceId} against {config.ServerBaseUrl}");
-        Console.WriteLine("Press Ctrl+C to stop.");
+    if (!string.IsNullOrWhiteSpace(cli.ServerBaseUrl))
+        config = config with { ServerBaseUrl = NormalizeBase(cli.ServerBaseUrl!) };
 
-        using var cts = new CancellationTokenSource();
-        Console.CancelKeyPress += (_, e) => { e.Cancel = true; cts.Cancel(); };
+    // Single-instance lock (per-user)
+    using var mutex = new Mutex(initiallyOwned: true, name: "Local\\HeadphonePagerAgent", createdNew: out var createdNew);
+    if (!createdNew)
+        return 0;
 
-        await RunLoop(config, cts.Token);
+    using var cts = new CancellationTokenSource();
+    var agentTask = RunAgentAsync(config, cts.Token);
+
+    Application.EnableVisualStyles();
+    Application.SetCompatibleTextRenderingDefault(false);
+
+    var iconPath = Path.Combine(AppContext.BaseDirectory, "tray.ico");
+    var tooltip = "Headphone Pager";
+    Application.Run(new TrayAppContext(cts, tooltip, iconPath));
+
+    cts.Cancel();
+    try { agentTask.GetAwaiter().GetResult(); } catch { }
+    return 0;
+}
+
+private static async Task<int> RunAgentAsync(AgentConfig config, CancellationToken token)
+{
+    try
+    {
+        await RunLoop(config, token);
         return 0;
     }
+    catch (OperationCanceledException)
+    {
+        return 0;
+    }
+    catch (Exception ex)
+    {
+        try
+        {
+            var logPath = Path.Combine(AppContext.BaseDirectory, "agent.log");
+            await File.AppendAllTextAsync(logPath, $"[{DateTime.Now:O}] Fatal: {ex}\n");
+        }
+        catch { }
+        return 1;
+    }
+}
+
+private sealed class TrayAppContext : ApplicationContext
+{
+    private readonly NotifyIcon _icon;
+    private readonly CancellationTokenSource _cts;
+
+    public TrayAppContext(CancellationTokenSource cts, string tooltip, string iconPath)
+    {
+        _cts = cts;
+
+        Icon ico;
+        try
+        {
+            ico = (!string.IsNullOrWhiteSpace(iconPath) && File.Exists(iconPath))
+                ? new Icon(iconPath)
+                : SystemIcons.Application;
+        }
+        catch { ico = SystemIcons.Application; }
+
+        var menu = new ContextMenuStrip();
+        var quit = new ToolStripMenuItem("Quit");
+        quit.Click += (_, _) => ExitRequested();
+        menu.Items.Add(quit);
+
+        _icon = new NotifyIcon
+        {
+            Icon = ico,
+            Text = tooltip.Length > 63 ? tooltip[..63] : tooltip,
+            Visible = true,
+            ContextMenuStrip = menu
+        };
+
+        try { _icon.ShowBalloonTip(1200, "Headphone Pager", "Agent running (right-click to quit)", ToolTipIcon.Info); } catch { }
+    }
+
+    private void ExitRequested()
+    {
+        _cts.Cancel();
+        try { _icon.Visible = false; _icon.Dispose(); } catch { }
+        ExitThread();
+    }
+}
+
+private static string GetHelpText()
+{
+    var sb = new StringBuilder();
+    sb.AppendLine("Headphone Pager Agent");
+    sb.AppendLine();
+    sb.AppendLine("Pair a device:");
+    sb.AppendLine("  HeadphoneAgent.exe --pair 123456 --server http://home.lan:8585 --name \"Kid-PC\"");
+    sb.AppendLine();
+    sb.AppendLine("Run (uses saved config):");
+    sb.AppendLine("  HeadphoneAgent.exe --server http://home.lan:8585");
+    sb.AppendLine();
+    sb.AppendLine("Options:");
+    sb.AppendLine("  --pair <code>     Pairing code from the UI");
+    sb.AppendLine("  --server <url>    Backend base URL");
+    sb.AppendLine("  --name <name>     Device display name (pairing)");
+    return sb.ToString();
+}
 
     private static void PrintHelp()
     {
