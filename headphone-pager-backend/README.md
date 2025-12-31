@@ -145,5 +145,9 @@ Designed for a **trusted home network**, not hostile environments.
 ---
 
 ## License
+This project is licensed under the **PolyForm Noncommercial License 1.0.0**. 
 
-This project is intended for **personal / home use**.
+Individual and personal use is encouraged, but commercial use is strictly prohibited. 
+For the full terms, please see the [LICENSE](LICENSE) file.
+
+[License: PolyForm Noncommercial](https://img.shields.io/badge/License-PolyForm_Noncommercial_1.0.0-lightgrey.svg)
