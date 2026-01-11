@@ -344,324 +344,980 @@ async def _startup():
 # -----------------------------
 _UI_HTML = r"""
 <!doctype html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>Headphone Pager</title>
   <style>
-    body { font-family: system-ui, sans-serif; max-width: 900px; margin: 24px auto; padding: 0 16px; }
-    .row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
-    input, select, textarea, button { font-size: 16px; padding: 10px; }
-    textarea { width: 100%; min-height: 80px; }
-    .card { border: 1px solid #ddd; border-radius: 12px; padding: 16px; margin: 16px 0; }
-    .muted { color: #666; }
-    code { background:#f6f6f6; padding:2px 6px; border-radius:6px; }
-    .pill { display:inline-block; padding:4px 10px; border-radius:999px; background:#f3f3f3; }
-    button:disabled { opacity: 0.6; cursor: not-allowed; }
-    h3 { margin-bottom: 8px; }
+    :root {
+      --primary: #3b82f6;
+      --primary-dark: #2563eb;
+      --success: #10b981;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+      --gray-50: #f9fafb;
+      --gray-100: #f3f4f6;
+      --gray-200: #e5e7eb;
+      --gray-300: #d1d5db;
+      --gray-600: #4b5563;
+      --gray-700: #374151;
+      --gray-800: #1f2937;
+      --gray-900: #111827;
+      --border-radius: 12px;
+      --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+      --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+      --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    }
+    
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 16px;
+      color: var(--gray-900);
+    }
+    
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    
+    .header {
+      background: white;
+      border-radius: var(--border-radius);
+      padding: 24px;
+      margin-bottom: 20px;
+      box-shadow: var(--shadow-lg);
+      text-align: center;
+    }
+    
+    .header h1 {
+      font-size: 28px;
+      color: var(--gray-900);
+      margin-bottom: 8px;
+      font-weight: 700;
+    }
+    
+    .header p {
+      color: var(--gray-600);
+      font-size: 14px;
+    }
+    
+    .card {
+      background: white;
+      border-radius: var(--border-radius);
+      padding: 24px;
+      margin-bottom: 20px;
+      box-shadow: var(--shadow-lg);
+    }
+    
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+      padding-bottom: 16px;
+      border-bottom: 2px solid var(--gray-100);
+    }
+    
+    .card-number {
+      background: var(--primary);
+      color: white;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+    
+    .card-header h2 {
+      font-size: 20px;
+      color: var(--gray-800);
+      font-weight: 600;
+      flex: 1;
+    }
+    
+    .form-group {
+      margin-bottom: 16px;
+    }
+    
+    .form-group:last-child {
+      margin-bottom: 0;
+    }
+    
+    label {
+      display: block;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--gray-700);
+      margin-bottom: 6px;
+    }
+    
+    input, select, textarea {
+      width: 100%;
+      padding: 12px 16px;
+      font-size: 15px;
+      border: 2px solid var(--gray-200);
+      border-radius: 8px;
+      background: white;
+      color: var(--gray-900);
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+    
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+    
+    input[type="file"] {
+      padding: 10px;
+      font-size: 14px;
+    }
+    
+    textarea {
+      min-height: 100px;
+      resize: vertical;
+    }
+    
+    button {
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      font-size: 15px;
+      font-weight: 500;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: inherit;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      white-space: nowrap;
+    }
+    
+    button:hover:not(:disabled) {
+      background: var(--primary-dark);
+      transform: translateY(-1px);
+      box-shadow: var(--shadow);
+    }
+    
+    button:active:not(:disabled) {
+      transform: translateY(0);
+    }
+    
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    
+    button.secondary {
+      background: var(--gray-100);
+      color: var(--gray-700);
+    }
+    
+    button.secondary:hover:not(:disabled) {
+      background: var(--gray-200);
+    }
+    
+    button.success {
+      background: var(--success);
+    }
+    
+    button.success:hover:not(:disabled) {
+      background: #059669;
+    }
+    
+    button.danger {
+      background: var(--danger);
+    }
+    
+    button.danger:hover:not(:disabled) {
+      background: #dc2626;
+    }
+    
+    .button-group {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    
+    .button-group button {
+      flex: 1;
+      min-width: 120px;
+    }
+    
+    .row {
+      display: grid;
+      gap: 12px;
+      grid-template-columns: 1fr;
+    }
+    
+    @media (min-width: 640px) {
+      .row.cols-2 {
+        grid-template-columns: 1fr 1fr;
+      }
+      
+      .row.cols-3 {
+        grid-template-columns: 1fr 1fr 1fr;
+      }
+      
+      .row.auto-fit {
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      }
+    }
+    
+    .info-box {
+      background: var(--gray-50);
+      border: 1px solid var(--gray-200);
+      border-radius: 8px;
+      padding: 12px 16px;
+      font-size: 14px;
+      color: var(--gray-700);
+      line-height: 1.6;
+    }
+    
+    .info-box code {
+      background: white;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 13px;
+      color: var(--primary);
+      font-family: 'Monaco', 'Courier New', monospace;
+    }
+    
+    .status-message {
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-size: 14px;
+      margin-top: 12px;
+      display: none;
+    }
+    
+    .status-message.show {
+      display: block;
+    }
+    
+    .status-message.success {
+      background: #d1fae5;
+      color: #065f46;
+      border: 1px solid #6ee7b7;
+    }
+    
+    .status-message.error {
+      background: #fee2e2;
+      color: #991b1b;
+      border: 1px solid #fca5a5;
+    }
+    
+    .status-message.info {
+      background: #dbeafe;
+      color: #1e40af;
+      border: 1px solid #93c5fd;
+    }
+    
+    .pill {
+      display: inline-block;
+      padding: 6px 14px;
+      border-radius: 999px;
+      background: var(--gray-100);
+      color: var(--gray-700);
+      font-size: 13px;
+      font-weight: 500;
+      border: 1px solid var(--gray-200);
+    }
+    
+    .pill.recording {
+      background: #fee2e2;
+      color: #991b1b;
+      border-color: #fca5a5;
+      animation: pulse 2s ease-in-out infinite;
+    }
+    
+    .pill.ready {
+      background: #d1fae5;
+      color: #065f46;
+      border-color: #6ee7b7;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+    
+    audio {
+      width: 100%;
+      margin-top: 12px;
+      border-radius: 8px;
+    }
+    
+    .device-info {
+      background: var(--gray-50);
+      border: 1px solid var(--gray-200);
+      border-radius: 8px;
+      padding: 12px 16px;
+      font-size: 14px;
+      color: var(--gray-700);
+      margin-top: 12px;
+    }
+    
+    .device-info strong {
+      color: var(--gray-900);
+      font-weight: 600;
+    }
+    
+    .pairing-code {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+      color: white;
+      padding: 20px;
+      border-radius: 8px;
+      text-align: center;
+      margin-top: 16px;
+      box-shadow: var(--shadow);
+    }
+    
+    .pairing-code-number {
+      font-size: 36px;
+      font-weight: 700;
+      letter-spacing: 4px;
+      margin: 8px 0;
+      font-family: 'Monaco', 'Courier New', monospace;
+    }
+    
+    .pairing-code-label {
+      font-size: 12px;
+      opacity: 0.9;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    
+    .pairing-code-expires {
+      font-size: 13px;
+      opacity: 0.8;
+      margin-top: 8px;
+    }
+    
+    .section-divider {
+      border: none;
+      border-top: 2px solid var(--gray-100);
+      margin: 24px 0;
+    }
+    
+    .section-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--gray-800);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .section-title::before {
+      content: '';
+      width: 4px;
+      height: 20px;
+      background: var(--primary);
+      border-radius: 2px;
+    }
+    
+    .hidden {
+      display: none !important;
+    }
+    
+    /* Loading spinner */
+    .spinner {
+      border: 3px solid var(--gray-200);
+      border-top: 3px solid var(--primary);
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      animation: spin 1s linear infinite;
+      display: inline-block;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    /* Mobile optimizations */
+    @media (max-width: 639px) {
+      body {
+        padding: 12px;
+      }
+      
+      .header {
+        padding: 20px 16px;
+      }
+      
+      .header h1 {
+        font-size: 24px;
+      }
+      
+      .card {
+        padding: 20px 16px;
+      }
+      
+      .card-header h2 {
+        font-size: 18px;
+      }
+      
+      .pairing-code-number {
+        font-size: 28px;
+        letter-spacing: 2px;
+      }
+      
+      button {
+        padding: 12px 16px;
+        font-size: 14px;
+      }
+    }
+    
+    /* Accessibility improvements */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
   </style>
 </head>
 <body>
-<h1>Headphone Pager</h1>
-<p class="muted">Single-container FastAPI backend. Enter your admin token once per session.</p>
+  <div class="container">
+    <div class="header">
+      <h1>🎧 Headphone Pager</h1>
+      <p>Send audio messages to your devices instantly</p>
+    </div>
 
-<div class="card">
-  <h2>1) Admin token</h2>
-  <div class="row">
-    <input id="adminToken" type="password" placeholder="ADMIN_TOKEN" style="flex:1; min-width: 260px;"/>
-    <button onclick="saveToken()">Save</button>
+    <!-- Admin Token Section -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-number">1</div>
+        <h2>Authentication</h2>
+      </div>
+      
+      <div class="form-group">
+        <label for="adminToken">Admin Token</label>
+        <input id="adminToken" type="password" placeholder="Enter your admin token" autocomplete="off"/>
+      </div>
+      
+      <button onclick="saveToken()" class="success">
+        <span>💾</span> Save Token
+      </button>
+      
+      <div class="info-box" style="margin-top: 16px;">
+        Your token is stored locally in your browser using <code>localStorage</code>. It's never sent to any external servers.
+      </div>
+      
+      <div id="tokenStatus" class="status-message"></div>
+    </div>
+
+    <!-- Device Pairing Section -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-number">2</div>
+        <h2>Pair a Device</h2>
+      </div>
+      
+      <button onclick="pairStart()">
+        <span>🔗</span> Generate Pairing Code
+      </button>
+      
+      <div id="pairOut"></div>
+      <div id="pairStatus" class="status-message"></div>
+    </div>
+
+    <!-- Messaging Section -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-number">3</div>
+        <h2>Send Message</h2>
+      </div>
+      
+      <!-- Device Selection -->
+      <div class="form-group">
+        <label for="deviceSelect">Select Device</label>
+        <select id="deviceSelect" onchange="onDeviceSelected()">
+          <option value="">Choose a device...</option>
+        </select>
+      </div>
+      
+      <div class="button-group">
+        <button onclick="loadDevices(true)" class="secondary">
+          <span>🔄</span> Refresh Devices
+        </button>
+      </div>
+      
+      <div id="deviceMeta" class="device-info hidden"></div>
+      <div id="devicesStatus" class="status-message"></div>
+      
+      <!-- Hidden field for device ID -->
+      <input id="deviceId" type="hidden"/>
+      
+      <hr class="section-divider"/>
+      
+      <!-- Message Settings -->
+      <div class="section-title">Message Settings</div>
+      
+      <div class="row cols-2">
+        <div class="form-group">
+          <label for="priority">Priority</label>
+          <select id="priority">
+            <option value="normal">🔔 Normal</option>
+            <option value="urgent">🚨 Urgent</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label for="ttl">Expiration</label>
+          <select id="ttl">
+            <option value="60">1 minute</option>
+            <option value="300">5 minutes</option>
+            <option value="600" selected>10 minutes</option>
+            <option value="1800">30 minutes</option>
+            <option value="3600">1 hour</option>
+          </select>
+        </div>
+      </div>
+      
+      <hr class="section-divider"/>
+      
+      <!-- Audio Upload -->
+      <div class="section-title">📎 Upload Audio File</div>
+      
+      <div class="form-group">
+        <input id="audioFile" type="file" accept="audio/*"/>
+      </div>
+      
+      <button onclick="sendAudioFile()" class="success">
+        <span>📤</span> Upload & Send
+      </button>
+      
+      <div class="info-box" style="margin-top: 12px;">
+        Upload any audio file. The server will automatically convert it to WAV format.
+      </div>
+      
+      <hr class="section-divider"/>
+      
+      <!-- Voice Recording -->
+      <div class="section-title">🎤 Record Voice Message</div>
+      
+      <div class="button-group">
+        <button id="recStart" onclick="startRecording()" class="danger">
+          <span>⏺️</span> Start Recording
+        </button>
+        <button id="recStop" onclick="stopRecording()" disabled class="secondary">
+          <span>⏹️</span> Stop
+        </button>
+      </div>
+      
+      <div style="margin-top: 12px;">
+        <span id="recStatus" class="pill">Ready to record</span>
+      </div>
+      
+      <audio id="recPreview" controls class="hidden"></audio>
+      
+      <button id="sendRecordedBtn" onclick="sendRecorded()" disabled class="success" style="margin-top: 12px; width: 100%;">
+        <span>📤</span> Send Recorded Message
+      </button>
+      
+      <div id="sendStatus" class="status-message"></div>
+    </div>
   </div>
-  <p class="muted">Token is stored in <code>localStorage</code> in this browser only.</p>
-</div>
 
-<div class="card">
-  <h2>2) Pair a device</h2>
-  <button onclick="pairStart()">Generate pairing code</button>
-  <p id="pairOut"></p>
-</div>
+  <script>
+    // Token Management
+    function getToken() {
+      return localStorage.getItem("adminToken") || "";
+    }
+    
+    function saveToken() {
+      const t = document.getElementById("adminToken").value.trim();
+      const status = document.getElementById("tokenStatus");
+      
+      if (!t) {
+        showStatus(status, "Please enter a token", "error");
+        return;
+      }
+      
+      localStorage.setItem("adminToken", t);
+      showStatus(status, "✓ Token saved successfully!", "success");
+    }
+    
+    // Load saved token on page load
+    document.getElementById("adminToken").value = getToken();
 
-<div class="card">
-  <h2>3) Send a message</h2>
+    // Pairing
+    async function pairStart() {
+      const pairOut = document.getElementById("pairOut");
+      const status = document.getElementById("pairStatus");
+      
+      pairOut.innerHTML = "";
+      status.className = "status-message";
+      
+      try {
+        const res = await fetch("/api/pairing/start", {
+          method: "POST",
+          headers: { "Authorization": "Bearer " + getToken() }
+        });
+        
+        if (!res.ok) {
+          showStatus(status, "Error generating pairing code. Check your admin token.", "error");
+          return;
+        }
+        
+        const j = await res.json();
+        
+        pairOut.innerHTML = `
+          <div class="pairing-code">
+            <div class="pairing-code-label">Pairing Code</div>
+            <div class="pairing-code-number">${j.code}</div>
+            <div class="pairing-code-expires">Expires: ${new Date(j.expiresAt).toLocaleString()}</div>
+          </div>
+        `;
+        
+        showStatus(status, "✓ Pairing code generated! Enter this code on your device.", "success");
+      } catch (err) {
+        showStatus(status, "Network error: " + err.message, "error");
+      }
+    }
 
-  <div class="row">
-    <select id="deviceSelect" style="flex:1; min-width: 260px;" onchange="onDeviceSelected()">
-      <option value="">Select device…</option>
-    </select>
-    <button onclick="loadDevices(true)" type="button">Refresh</button>
+    // Device Management
+    async function loadDevices(selectFirst = false) {
+      const status = document.getElementById("devicesStatus");
+      const meta = document.getElementById("deviceMeta");
+      
+      showStatus(status, "Loading devices...", "info");
+      meta.classList.add("hidden");
+      
+      try {
+        const res = await fetch("/api/devices", {
+          headers: { "Authorization": "Bearer " + getToken() }
+        });
+        
+        if (!res.ok) {
+          showStatus(status, "Failed to load devices. Check your admin token.", "error");
+          return;
+        }
+        
+        const list = await res.json();
+        const sel = document.getElementById("deviceSelect");
+        
+        sel.innerHTML = '<option value="">Choose a device...</option>';
+        
+        window._devicesById = {};
+        for (const d of list) {
+          window._devicesById[d.deviceId] = d;
+          const opt = document.createElement("option");
+          opt.value = d.deviceId;
+          opt.textContent = d.name || d.deviceId;
+          sel.appendChild(opt);
+        }
+        
+        if (list.length === 0) {
+          showStatus(status, "No devices paired yet. Generate a pairing code first.", "info");
+          return;
+        }
+        
+        showStatus(status, `✓ Loaded ${list.length} device(s)`, "success");
+        
+        if (selectFirst && !sel.value && list.length > 0) {
+          sel.value = list[0].deviceId;
+          onDeviceSelected();
+        }
+      } catch (err) {
+        showStatus(status, "Network error: " + err.message, "error");
+      }
+    }
 
-    <select id="priority">
-      <option value="normal">normal</option>
-      <option value="urgent">urgent</option>
-    </select>
-    <select id="ttl">
-      <option value="60">expires in 1m</option>
-      <option value="300">expires in 5m</option>
-      <option value="600" selected>expires in 10m</option>
-      <option value="1800">expires in 30m</option>
-      <option value="3600">expires in 1h</option>
-    </select>
+    function onDeviceSelected() {
+      const sel = document.getElementById("deviceSelect");
+      const deviceId = sel.value || "";
+      const meta = document.getElementById("deviceMeta");
+      
+      if (!deviceId) {
+        meta.classList.add("hidden");
+        document.getElementById("deviceId").value = "";
+        return;
+      }
+      
+      document.getElementById("deviceId").value = deviceId;
+      
+      const d = (window._devicesById || {})[deviceId];
+      if (!d) {
+        meta.classList.add("hidden");
+        return;
+      }
+      
+      meta.innerHTML = `
+        <strong>Device:</strong> ${d.name || deviceId}<br>
+        <strong>ID:</strong> ${deviceId}<br>
+        <strong>Last seen:</strong> ${formatLastSeen(d.lastSeenAt)}
+      `;
+      meta.classList.remove("hidden");
+    }
 
-    <!-- hidden field used by send functions -->
-    <input id="deviceId" placeholder="Device ID" style="flex:1; min-width: 260px; display:none;"/>
-  </div>
+    function formatLastSeen(lastSeenAt) {
+      if (!lastSeenAt) return "never";
+      try {
+        const date = new Date(lastSeenAt);
+        const now = new Date();
+        const diffMs = now - date;
+        const diffMins = Math.floor(diffMs / 60000);
+        
+        if (diffMins < 1) return "just now";
+        if (diffMins < 60) return `${diffMins} minute${diffMins !== 1 ? 's' : ''} ago`;
+        
+        const diffHours = Math.floor(diffMins / 60);
+        if (diffHours < 24) return `${diffHours} hour${diffHours !== 1 ? 's' : ''} ago`;
+        
+        return date.toLocaleString();
+      } catch {
+        return lastSeenAt;
+      }
+    }
 
-  <p class="muted" id="devicesOut"></p>
-  <p class="muted" id="deviceMeta"></p>
+    // Message Helpers
+    function baseMessage() {
+      return {
+        priority: document.getElementById("priority").value,
+        ttlSeconds: parseInt(document.getElementById("ttl").value, 10)
+      };
+    }
 
-  <h3>Voice message</h3>
-  <p class="muted">Upload an audio file or record directly in the browser. The server converts audio to <code>.wav</code> for client simplicity.</p>
+    function getDeviceIdOrWarn(statusEl) {
+      const deviceId = document.getElementById("deviceId").value.trim();
+      if (!deviceId) {
+        showStatus(statusEl, "Please select a device first", "error");
+        return "";
+      }
+      return deviceId;
+    }
 
-  <div class="row">
-    <input id="audioFile" type="file" accept="audio/*"/>
-    <button onclick="sendAudioFile()">Upload + Send</button>
-  </div>
+    // Audio Upload
+    async function uploadBlobAsAudioAndSend(deviceId, blob, filenameHint) {
+      const status = document.getElementById("sendStatus");
+      
+      const fd = new FormData();
+      const file = new File([blob], filenameHint || "recording.webm", { 
+        type: blob.type || "audio/webm" 
+      });
+      fd.append("file", file);
+      
+      showStatus(status, "Uploading audio...", "info");
+      
+      const up = await fetch("/api/uploads/audio", {
+        method: "POST",
+        headers: { "Authorization": "Bearer " + getToken() },
+        body: fd
+      });
+      
+      if (!up.ok) {
+        showStatus(status, "Upload failed: " + up.status, "error");
+        return null;
+      }
+      
+      const uj = await up.json();
+      
+      showStatus(status, "Sending message...", "info");
+      
+      const body = Object.assign(baseMessage(), { 
+        type: "audio", 
+        audioBlobKey: uj.audioBlobKey 
+      });
+      
+      const res = await fetch("/api/devices/" + encodeURIComponent(deviceId) + "/messages", {
+        method: "POST",
+        headers: { 
+          "Authorization": "Bearer " + getToken(), 
+          "Content-Type": "application/json" 
+        },
+        body: JSON.stringify(body)
+      });
+      
+      if (!res.ok) {
+        showStatus(status, "Send failed: " + res.status, "error");
+        return null;
+      }
+      
+      const j = await res.json();
+      return { upload: uj, send: j };
+    }
 
-  <div class="row" style="margin-top: 8px;">
-    <button id="recStart" onclick="startRecording()">Start recording</button>
-    <button id="recStop" onclick="stopRecording()" disabled>Stop</button>
-    <span id="recStatus" class="pill">idle</span>
-  </div>
+    async function sendAudioFile() {
+      const status = document.getElementById("sendStatus");
+      const deviceId = getDeviceIdOrWarn(status);
+      if (!deviceId) return;
+      
+      const fileInput = document.getElementById("audioFile");
+      if (!fileInput.files.length) {
+        showStatus(status, "Please select an audio file", "error");
+        return;
+      }
+      
+      const f = fileInput.files[0];
+      
+      try {
+        const result = await uploadBlobAsAudioAndSend(deviceId, f, f.name);
+        if (!result) return;
+        
+        showStatus(status, `✓ Audio message sent successfully! (ID: ${result.send.messageId.substring(0, 8)}...)`, "success");
+        fileInput.value = "";
+      } catch (err) {
+        showStatus(status, "Error: " + err.message, "error");
+      }
+    }
 
-  <div class="row" style="margin-top: 8px;">
-    <audio id="recPreview" controls style="width: 100%; display:none;"></audio>
-  </div>
+    // Recording
+    let mediaRecorder = null;
+    let recordedChunks = [];
+    let recordedBlob = null;
 
-  <div class="row" style="margin-top: 8px;">
-    <button id="sendRecordedBtn" onclick="sendRecorded()" disabled>Send recorded message</button>
-  </div>
+    function setRecStatus(text, type = "default") {
+      const el = document.getElementById("recStatus");
+      el.textContent = text;
+      el.className = "pill";
+      if (type === "recording") el.classList.add("recording");
+      if (type === "ready") el.classList.add("ready");
+    }
 
-  <p id="sendOut"></p>
-</div>
+    function pickMimeType() {
+      const candidates = [
+        "audio/webm;codecs=opus",
+        "audio/webm",
+        "audio/ogg;codecs=opus",
+        "audio/ogg"
+      ];
+      for (const t of candidates) {
+        if (window.MediaRecorder && MediaRecorder.isTypeSupported && 
+            MediaRecorder.isTypeSupported(t)) return t;
+      }
+      return "";
+    }
 
-<script>
-function getToken() {
-  return localStorage.getItem("adminToken") || "";
-}
-function saveToken() {
-  const t = document.getElementById("adminToken").value.trim();
-  localStorage.setItem("adminToken", t);
-  alert("Saved.");
-}
-document.getElementById("adminToken").value = getToken();
+    async function startRecording() {
+      const status = document.getElementById("sendStatus");
+      status.className = "status-message";
+      
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || !window.MediaRecorder) {
+        showStatus(status, "Recording not supported in this browser", "error");
+        return;
+      }
+      
+      recordedChunks = [];
+      recordedBlob = null;
+      
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        const mimeType = pickMimeType();
+        mediaRecorder = mimeType ? 
+          new MediaRecorder(stream, { mimeType }) : 
+          new MediaRecorder(stream);
+        
+        mediaRecorder.ondataavailable = (e) => {
+          if (e.data && e.data.size > 0) recordedChunks.push(e.data);
+        };
+        
+        mediaRecorder.onstop = () => {
+          stream.getTracks().forEach(t => t.stop());
+          
+          recordedBlob = new Blob(recordedChunks, { 
+            type: mediaRecorder.mimeType || "audio/webm" 
+          });
+          const url = URL.createObjectURL(recordedBlob);
+          
+          const audio = document.getElementById("recPreview");
+          audio.src = url;
+          audio.classList.remove("hidden");
+          
+          document.getElementById("sendRecordedBtn").disabled = false;
+          setRecStatus(`Ready (${Math.round(recordedBlob.size / 1024)} KB)`, "ready");
+        };
+        
+        mediaRecorder.start();
+        document.getElementById("recStart").disabled = true;
+        document.getElementById("recStop").disabled = false;
+        document.getElementById("sendRecordedBtn").disabled = true;
+        document.getElementById("recPreview").classList.add("hidden");
+        setRecStatus("Recording...", "recording");
+      } catch (err) {
+        showStatus(status, "Microphone access denied or error: " + err.message, "error");
+      }
+    }
 
-async function pairStart() {
-  const res = await fetch("/api/pairing/start", {
-    method: "POST",
-    headers: { "Authorization": "Bearer " + getToken() }
-  });
-  const out = document.getElementById("pairOut");
-  if (!res.ok) { out.textContent = "Error: " + res.status; return; }
-  const j = await res.json();
-  out.innerHTML = "Pairing code: <code>" + j.code + "</code> (expires " + j.expiresAt + ")";
-}
+    function stopRecording() {
+      if (!mediaRecorder) return;
+      if (mediaRecorder.state === "recording") mediaRecorder.stop();
+      document.getElementById("recStart").disabled = false;
+      document.getElementById("recStop").disabled = true;
+      setRecStatus("Processing...");
+    }
 
-async function loadDevices(selectFirst=false) {
-  const out = document.getElementById("devicesOut");
-  const meta = document.getElementById("deviceMeta");
-  out.textContent = "Loading devices…";
-  meta.textContent = "";
-  const res = await fetch("/api/devices", {
-    headers: { "Authorization": "Bearer " + getToken() }
-  });
-  if (!res.ok) { out.textContent = "Failed to load devices: " + res.status; return; }
-  const list = await res.json();
+    async function sendRecorded() {
+      const status = document.getElementById("sendStatus");
+      const deviceId = getDeviceIdOrWarn(status);
+      if (!deviceId) return;
+      
+      if (!recordedBlob) {
+        showStatus(status, "No recording available", "error");
+        return;
+      }
+      
+      document.getElementById("sendRecordedBtn").disabled = true;
+      
+      try {
+        const ext = (recordedBlob.type && recordedBlob.type.includes("ogg")) ? ".ogg" : ".webm";
+        const result = await uploadBlobAsAudioAndSend(deviceId, recordedBlob, "recording" + ext);
+        
+        if (!result) {
+          document.getElementById("sendRecordedBtn").disabled = false;
+          return;
+        }
+        
+        showStatus(status, `✓ Voice message sent successfully! (ID: ${result.send.messageId.substring(0, 8)}...)`, "success");
+        
+        // Reset recording UI
+        recordedBlob = null;
+        document.getElementById("recPreview").classList.add("hidden");
+        setRecStatus("Ready to record");
+      } catch (err) {
+        showStatus(status, "Error: " + err.message, "error");
+        document.getElementById("sendRecordedBtn").disabled = false;
+      }
+    }
 
-  const sel = document.getElementById("deviceSelect");
-  sel.innerHTML = "";
-  const placeholder = document.createElement("option");
-  placeholder.value = "";
-  placeholder.textContent = "Select device…";
-  sel.appendChild(placeholder);
+    // Utility Functions
+    function showStatus(element, message, type = "info") {
+      element.textContent = message;
+      element.className = "status-message show " + type;
+    }
 
-  window._devicesById = {};
-  for (const d of list) {
-    window._devicesById[d.deviceId] = d;
-    const opt = document.createElement("option");
-    opt.value = d.deviceId;
-    opt.textContent = d.name ? d.name : d.deviceId;
-    sel.appendChild(opt);
-  }
-
-  if (list.length === 0) {
-    out.textContent = "No devices registered yet. Pair a device first.";
-    return;
-  }
-  out.textContent = "Loaded " + list.length + " device(s).";
-
-  if (selectFirst && !sel.value) sel.value = list[0].deviceId;
-  onDeviceSelected();
-}
-
-function formatLastSeen(lastSeenAt) {
-  if (!lastSeenAt) return "never";
-  try { return new Date(lastSeenAt).toLocaleString(); }
-  catch { return lastSeenAt; }
-}
-
-function onDeviceSelected() {
-  const sel = document.getElementById("deviceSelect");
-  const deviceId = sel.value || "";
-  const meta = document.getElementById("deviceMeta");
-  if (!deviceId) { meta.textContent = ""; return; }
-
-  document.getElementById("deviceId").value = deviceId;
-
-  const d = (window._devicesById || {})[deviceId];
-  if (!d) { meta.textContent = ""; return; }
-
-  meta.textContent = "Selected: " + (d.name || deviceId) + " • Device ID: " + deviceId + " • Last seen: " + formatLastSeen(d.lastSeenAt);
-}
-
-function baseMessage() {
-  return {
-    priority: document.getElementById("priority").value,
-    ttlSeconds: parseInt(document.getElementById("ttl").value, 10)
-  };
-}
-
-function getDeviceIdOrWarn(outEl) {
-  const deviceId = document.getElementById("deviceId").value.trim();
-  if (!deviceId) { outEl.textContent = "Device required. Select one from the dropdown and click Refresh if needed."; return ""; }
-  return deviceId;
-}
-
-async function uploadBlobAsAudioAndSend(deviceId, blob, filenameHint) {
-  const out = document.getElementById("sendOut");
-
-  const fd = new FormData();
-  const file = new File([blob], filenameHint || "recording.webm", { type: blob.type || "audio/webm" });
-  fd.append("file", file);
-
-  const up = await fetch("/api/uploads/audio", {
-    method: "POST",
-    headers: { "Authorization": "Bearer " + getToken() },
-    body: fd
-  });
-  if (!up.ok) { out.textContent = "Upload error: " + up.status; return null; }
-  const uj = await up.json();
-
-  const body = Object.assign(baseMessage(), { type: "audio", audioBlobKey: uj.audioBlobKey });
-  const res = await fetch("/api/devices/" + encodeURIComponent(deviceId) + "/messages", {
-    method: "POST",
-    headers: { "Authorization": "Bearer " + getToken(), "Content-Type":"application/json" },
-    body: JSON.stringify(body)
-  });
-  if (!res.ok) { out.textContent = "Send error: " + res.status; return null; }
-  const j = await res.json();
-  return { upload: uj, send: j };
-}
-
-async function sendAudioFile() {
-  const out = document.getElementById("sendOut");
-  const deviceId = getDeviceIdOrWarn(out);
-  if (!deviceId) return;
-
-  const fileInput = document.getElementById("audioFile");
-  if (!fileInput.files.length) { out.textContent = "Audio file required."; return; }
-  const f = fileInput.files[0];
-
-  const result = await uploadBlobAsAudioAndSend(deviceId, f, f.name);
-  if (!result) return;
-  out.textContent = "Uploaded + Sent audio. messageId=" + result.send.messageId + " expiresAt=" + result.send.expiresAt;
-}
-
-/* -------- Browser recording -------- */
-let mediaRecorder = null;
-let recordedChunks = [];
-let recordedBlob = null;
-
-function setRecStatus(text) {
-  document.getElementById("recStatus").textContent = text;
-}
-
-function pickMimeType() {
-  const candidates = [
-    "audio/webm;codecs=opus",
-    "audio/webm",
-    "audio/ogg;codecs=opus",
-    "audio/ogg"
-  ];
-  for (const t of candidates) {
-    if (window.MediaRecorder && MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(t)) return t;
-  }
-  return "";
-}
-
-async function startRecording() {
-  const out = document.getElementById("sendOut");
-  out.textContent = "";
-
-  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || !window.MediaRecorder) {
-    out.textContent = "Recording not supported in this browser.";
-    return;
-  }
-
-  recordedChunks = [];
-  recordedBlob = null;
-
-  try {
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    const mimeType = pickMimeType();
-    mediaRecorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
-
-    mediaRecorder.ondataavailable = (e) => {
-      if (e.data && e.data.size > 0) recordedChunks.push(e.data);
-    };
-
-    mediaRecorder.onstop = () => {
-      stream.getTracks().forEach(t => t.stop());
-
-      recordedBlob = new Blob(recordedChunks, { type: mediaRecorder.mimeType || "audio/webm" });
-      const url = URL.createObjectURL(recordedBlob);
-
-      const audio = document.getElementById("recPreview");
-      audio.src = url;
-      audio.style.display = "block";
-
-      document.getElementById("sendRecordedBtn").disabled = false;
-      setRecStatus("recorded (" + Math.round(recordedBlob.size/1024) + " KB)");
-    };
-
-    mediaRecorder.start();
-    document.getElementById("recStart").disabled = true;
-    document.getElementById("recStop").disabled = false;
-    document.getElementById("sendRecordedBtn").disabled = true;
-    document.getElementById("recPreview").style.display = "none";
-    setRecStatus("recording…");
-  } catch (err) {
-    out.textContent = "Mic permission/recording error: " + err;
-  }
-}
-
-function stopRecording() {
-  if (!mediaRecorder) return;
-  if (mediaRecorder.state === "recording") mediaRecorder.stop();
-  document.getElementById("recStart").disabled = false;
-  document.getElementById("recStop").disabled = true;
-  setRecStatus("processing…");
-}
-
-async function sendRecorded() {
-  const out = document.getElementById("sendOut");
-  const deviceId = getDeviceIdOrWarn(out);
-  if (!deviceId) return;
-  if (!recordedBlob) { out.textContent = "No recording available."; return; }
-
-  document.getElementById("sendRecordedBtn").disabled = true;
-  out.textContent = "Uploading…";
-
-  const ext = (recordedBlob.type && recordedBlob.type.includes("ogg")) ? ".ogg" : ".webm";
-  const result = await uploadBlobAsAudioAndSend(deviceId, recordedBlob, "recording" + ext);
-  if (!result) {
-    document.getElementById("sendRecordedBtn").disabled = false;
-    return;
-  }
-  out.textContent = "Recorded + Sent audio. messageId=" + result.send.messageId + " expiresAt=" + result.send.expiresAt;
-}
-</script>
+    // Auto-load devices on page load if token is available
+    window.addEventListener("DOMContentLoaded", () => {
+      if (getToken()) {
+        loadDevices();
+      }
+    });
+  </script>
 </body>
 </html>
+
 """
 
 @app.get("/ui", response_class=HTMLResponse)
